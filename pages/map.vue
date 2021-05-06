@@ -9,7 +9,7 @@
 </template>
 
 <script>
-// const pointInPolygon = require('point-in-polygon')
+const pointInPolygon = require('point-in-polygon')
 export default {
   async asyncData ({ $axios }) {
     const response = await $axios.get('/api/position/route')
@@ -27,6 +27,7 @@ export default {
       area: [],
       dict: [],
       count: 0,
+      bound: [],
       color: [
         '#FF1F19',
         '#FF3119',
@@ -115,7 +116,7 @@ export default {
           fillOpacity: 0
         })
         rectangle.setMap(map)
-        // console.log(pointInPolygon([37.481859728278394, 127.14922237366487], boundary), 'true?')
+        console.log(pointInPolygon([37.481859728278394, 127.14922237366487], bound), 'true?')
       }
 
       // 사람마다 움직인 linepath 표시하기
