@@ -39,7 +39,8 @@ export default {
         '#FFCE19',
         '#FFE219',
         '#FFEC19'
-      ]
+      ],
+      final: 0
     }
   },
   watch: {
@@ -96,10 +97,19 @@ export default {
       for (const i of this.area) {
         let sw = ''
         let ne = ''
+        const secondBound = []
         if (i[1].LNG > i[0].LNG) {
           const east = this.toEast(i)
           sw = east[0]
           ne = east[1]
+          console.log(sw, 'sw')
+          console.log(ne, 'ne')
+          secondBound.push([sw.Ma, sw.La])
+          secondBound.push([ne.Ma, sw.La])
+          secondBound.push([ne.Ma, ne.La])
+          secondBound.push([sw.Ma, ne.La])
+          this.bound.push(secondBound)
+          console.log(this.bound, 'this.bound')
         } else {
           const west = this.toWest(i)
           sw = west[0]
@@ -116,16 +126,19 @@ export default {
           fillOpacity: 0
         })
         rectangle.setMap(map)
-        console.log(pointInPolygon([37.481859728278394, 127.14922237366487], bound), 'true?')
       }
 
       // 사람마다 움직인 linepath 표시하기
       for (const i of this.copyUser) {
         const linePath = []
+        // console.log(this.bound, 'bounddddddddd')
         for (const j of i) {
           linePath.push(new kakao.maps.LatLng(j.LAT, j.LNG))
+          if (pointInPolygon([j.LAT, j.LNG], this.bound[0])) {
+            this.final += 1
+          }
+          console.log(this.final, 'final')
         }
-
         // 출발 마커
         // const startSrc = 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/red_b.png'
         // const startSize = new kakao.maps.Size(50, 45)
@@ -159,10 +172,19 @@ export default {
           endArrow: true,
           path: linePath,
           strokeWeight: 3,
-          strokeColor: this.color[0],
-          strokeOpacity: 0.5,
-          strokeStyle: 'solid'
+          strokeOpacity: 0.8,
+          strokeStyle: 'solid',
+          strokeColor: '#22ff00'
         })
+        if (this.final === 3 || this.final === 4) {
+          polyline.Eb[0].strokeColor = '#e8cf15'
+        } else {
+          polyline.Eb[0].strokeColor = '#22ff00'
+        }
+        // console.log(polyline, 'before')
+        // console.log(polyline.Eb[0])
+        // polyline.Eb[0].strokeColor = '#e8cf15'
+        // console.log(polyline, 'after')
         polyline.setMap(map)
       }
     },

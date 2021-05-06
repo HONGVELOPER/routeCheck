@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # routecheck
 
 ## Build Setup
@@ -19,6 +18,3 @@ $ npm run generate
 ```
 
 For detailed explanation on how things work, check out [Nuxt.js docs](https://nuxtjs.org).
-=======
-# routeCheck
->>>>>>> d74aa8faa68ba5ae6a0821dd4a8f0b21395ec465
