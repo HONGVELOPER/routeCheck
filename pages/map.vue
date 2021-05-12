@@ -12,12 +12,10 @@
 </template>
 
 <script>
-// const qs = require('qs')
 const pointInPolygon = require('point-in-polygon')
 export default {
   async asyncData ({ $axios }) {
     const response = await $axios.get('/api/position/route')
-    // console.log(response.data, 'dataaaaaaaaaa')
     if (response.status === 200) {
       return {
         guide: response.data
@@ -29,9 +27,7 @@ export default {
       linePath: null,
       oneUser: [],
       copyUser: [],
-      area: [],
-      dict: [],
-      count: 0,
+      dotCount: 0,
       bound: [],
       secondBound: [],
       color: [
@@ -46,7 +42,9 @@ export default {
         '#FF3119',
         '#FF1F19'
       ],
-      final: 0
+      colorCount: 0,
+      point: [],
+      all_of_poly: []
     }
   },
   watch: {
@@ -83,124 +81,81 @@ export default {
         }
       }
 
-      // polyline 으로 rectangle 만들기 위해 2개씩 배열 자르기(한개씩 중복 및 다른 사람이면 버리기)
-      for (const i of this.guide) {
-        this.dict.push(i)
-        this.count += 1
-        if (this.count === 2) {
-          this.area.push(this.dict)
-          this.dict = []
-          this.dict.push(i)
-          this.count = 1
-        }
-        if (i.R_END === 1) {
-          this.count = 0
-          this.dict = []
-        }
-      }
-      // location 으로 rectangle 생성
-      for (const i of this.area) {
-        let sw = ''
-        let ne = ''
-        // const secondBound = []
-        if (i[1].R_LNG > i[0].R_LNG) {
-          const east = this.toEast(i)
-          this.makeBound(east)
-          // console.log(this.bound, 'boundddddddddddddd')
-          sw = east[0]
-          ne = east[1]
-          // secondBound.push([sw.Ma, sw.La])
-          // secondBound.push([ne.Ma, sw.La])
-          // secondBound.push([ne.Ma, ne.La])
-          // secondBound.push([sw.Ma, ne.La])
-          // this.bound.push(secondBound)
-          // this.bound 를 east 로 이동할때만 넣어논거 임시방편임
-        } else {
-          const west = this.toWest(i)
-          this.makeBound(west)
-          // console.log(this.bound, 'bounddddddddddddddd')
-          sw = west[0]
-          ne = west[1]
-        }
-        const rectangleBounds = new kakao.maps.LatLngBounds(sw, ne)
-        const rectangle = new kakao.maps.Rectangle({
-          bounds: rectangleBounds,
-          strokeWeight: 4,
-          strokeColor: '#FF3DE5',
-          strokeOpacity: 0.6,
-          strokeStyle: 'solid',
-          fillColor: '#FF8AEF',
-          fillOpacity: 0
-        })
-        rectangle.setMap(map)
-      }
-
       // linePath 그리기 전 (위도, 경도)가 bound에 있는지 아닌지 파악
 
-      // 사람마다 움직인 linepath 표시하기
-      // console.log(this.bound, 'bound')
-      console.log(this.copyUser, 'copyuser')
+      // 바운드 마다 몇개의 (위도, 경도) 좌표가 있는지 counting 및 polyline 색 정하기
       for (const i of this.copyUser) {
-        console.log(this.copyUser.indexOf(i), i, 'ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ')
-        // i는 사람 1명이 1번에 다닌 (위도, 경도) 데이터 집합
-        const linePath = []
         for (const j of i) {
-          // j는 i의 각각 (위도, 경도) 데이터
-          linePath.push(new kakao.maps.LatLng(j.R_LAT, j.R_LNG))
-          for (const k of this.bound) {
-            const squareBound = [k[0], k[1], k[2], k[3]]
-            if (pointInPolygon([j.R_LAT, j.R_LNG], squareBound)) {
-              k[4].count += 1
-              console.log(this.bound.indexOf(k), '에서', k[4].count, '번')
-            } else {
-              console.log('bombbbbbbbbbbbbb')
+          const linePath = []
+          // const point = []
+          this.point = []
+          if (i.indexOf(j) < i.length - 1) {
+            this.point.push(j)
+            this.point.push(i[i.indexOf(j) + 1])
+            const kakaoRectangle = this.makeRectangle(this.point) // secondBound, kakaoBound 생성
+            kakaoRectangle.setMap(map)
+            linePath.push(new kakao.maps.LatLng(this.point[0].R_LAT, this.point[0].R_LNG))
+            linePath.push(new kakao.maps.LatLng(this.point[1].R_LAT, this.point[1].R_LNG))
+            for (const k of this.bound) {
+              // k 는 secondBound 배열이다.
+              const polyline = new kakao.maps.Polyline({
+                endArrow: true,
+                path: linePath,
+                strokeWeight: 3,
+                strokeOpacity: 0.8,
+                strokeStyle: 'solid'
+              })
+              let squareBound = null
+              squareBound = [k[0], k[1], k[2], k[3]]
+              if ((pointInPolygon([this.point[0].R_LAT, this.point[0].R_LNG], squareBound)) && (pointInPolygon([this.point[1].R_LAT, this.point[1].R_LNG], squareBound))) {
+                k[4].count += 1
+                console.log(k[4].count, 'count check')
+                this.all_of_poly.push(polyline)
+              }
             }
           }
         }
-        // 출발 마커
-        // const startSrc = 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/red_b.png'
-        // const startSize = new kakao.maps.Size(50, 45)
-        // const startOption = {
-        //   offset: new kakao.maps.Point(15, 45)
-        // }
-        // const startImage = new kakao.maps.MarkerImage(startSrc, startSize, startOption)
-        // const startPosition = new kakao.maps.LatLng(i[0].LAT, i[0].LNG)
-        // const startMarker = new kakao.maps.Marker({
-        //   position: startPosition,
-        //   image: startImage
-        // })
-        // startMarker.setMap(map)
-
-        // 도착 마커
-        // const arriveSrc = 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/blue_b.png'
-        // const arriveSize = new kakao.maps.Size(50, 45)
-        // const arriveOption = {
-        //   offset: new kakao.maps.Point(15, 45)
-        // }
-        // const arriveImage = new kakao.maps.MarkerImage(arriveSrc, arriveSize, arriveOption)
-        // console.log(i.length, '크기~~~~~~~`')
-        // const arrivePosition = new kakao.maps.LatLng(i[i.length - 1].LAT, i[i.length - 1].LNG)
-        // const arriveMarker = new kakao.maps.Marker({
-        //   position: arrivePosition,
-        //   image: arriveImage
-        // })
-        // arriveMarker.setMap(map)
-
-        const polyline = new kakao.maps.Polyline({
-          // endArrow: true,
-          path: linePath,
-          strokeWeight: 3,
-          strokeOpacity: 0.8,
-          strokeStyle: 'solid',
-          strokeColor: '#22ff00'
-        })
-        if (this.final === 2) {
-          polyline.Eb[0].strokeColor = this.color[9]
-        } else {
-          polyline.Eb[0].strokeColor = this.color[0]
-        }
-        polyline.setMap(map)
       }
+      // bound count 숫자에 따른 polyline 생 지정
+      let index = 0
+      for (const i of this.all_of_poly) {
+        if (this.bound[index]) {
+          const iterator = this.bound[index]
+          i.Eb[0].strokeColor = this.color[iterator[4].count]
+          index += 1
+        }
+        console.log(i, 'check')
+        i.setMap(map)
+      }
+      // }
+      // 출발 마커
+      // const startSrc = 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/red_b.png'
+      // const startSize = new kakao.maps.Size(50, 45)
+      // const startOption = {
+      //   offset: new kakao.maps.Point(15, 45)
+      // }
+      // const startImage = new kakao.maps.MarkerImage(startSrc, startSize, startOption)
+      // const startPosition = new kakao.maps.LatLng(i[0].LAT, i[0].LNG)
+      // const startMarker = new kakao.maps.Marker({
+      //   position: startPosition,
+      //   image: startImage
+      // })
+      // startMarker.setMap(map)
+
+      // 도착 마커
+      // const arriveSrc = 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/blue_b.png'
+      // const arriveSize = new kakao.maps.Size(50, 45)
+      // const arriveOption = {
+      //   offset: new kakao.maps.Point(15, 45)
+      // }
+      // const arriveImage = new kakao.maps.MarkerImage(arriveSrc, arriveSize, arriveOption)
+      // console.log(i.length, '크기~~~~~~~`')
+      // const arrivePosition = new kakao.maps.LatLng(i[i.length - 1].LAT, i[i.length - 1].LNG)
+      // const arriveMarker = new kakao.maps.Marker({
+      //   position: arrivePosition,
+      //   image: arriveImage
+      // })
+      // arriveMarker.setMap(map)
     },
 
     // way = [[위도, 경도], [위도, 경도]] 데이터 이다.
@@ -210,10 +165,12 @@ export default {
       const array = []
       let sw = null
       let ne = null
+      // 오른쪽 위로 움직일때
       if (parseFloat(way[1].R_LAT) >= parseFloat(way[0].R_LAT)) {
         sw = new kakao.maps.LatLng(parseFloat(way[0].R_LAT) - 0.00003, parseFloat(way[0].R_LNG) - 0.00003)
         ne = new kakao.maps.LatLng(parseFloat(way[1].R_LAT) + 0.00003, parseFloat(way[1].R_LNG) + 0.00003)
       } else {
+        // 오른쪽 아래로 움직일때
         sw = new kakao.maps.LatLng(parseFloat(way[0].R_LAT) + 0.00003, parseFloat(way[0].R_LNG) - 0.00003)
         ne = new kakao.maps.LatLng(parseFloat(way[1].R_LAT) - 0.00003, parseFloat(way[1].R_LNG) + 0.00003)
       }
@@ -227,10 +184,12 @@ export default {
       const array = []
       let sw = null
       let ne = null
+      // 왼쪽 위로 움직일때
       if (parseFloat(way[1].R_LAT) >= parseFloat(way[0].R_LAT)) {
         sw = new kakao.maps.LatLng(parseFloat(way[0].R_LAT) - 0.00003, parseFloat(way[0].R_LNG) + 0.00003)
         ne = new kakao.maps.LatLng(parseFloat(way[1].R_LAT) + 0.00003, parseFloat(way[1].R_LNG) - 0.00003)
       } else {
+        // 왼쪽 아래로 움직일때
         sw = new kakao.maps.LatLng(parseFloat(way[0].R_LAT) + 0.00003, parseFloat(way[0].R_LNG) + 0.00003)
         ne = new kakao.maps.LatLng(parseFloat(way[1].R_LAT) - 0.00003, parseFloat(way[1].R_LNG) - 0.00003)
       }
@@ -238,21 +197,57 @@ export default {
       array.push(ne)
       return array
     },
+    // (위도, 경도) 마다 rectangle bound 생성
     makeBound (location) {
       this.secondBound = []
-      this.secondBound.push([location[0].Ma, location[0].La])
-      this.secondBound.push([location[0].Ma, location[1].La])
-      this.secondBound.push([location[1].Ma, location[0].La])
-      this.secondBound.push([location[1].Ma, location[1].La])
+      if ((location[1].Ma < location[0].Ma && location[1].La > location[0].La) ||
+        (location[1].Ma >= location[0].Ma && location[1].La <= location[0].La)) {
+        this.secondBound.push([location[0].Ma, location[0].La])
+        this.secondBound.push([location[1].Ma, location[0].La])
+        this.secondBound.push([location[1].Ma, location[1].La])
+        this.secondBound.push([location[0].Ma, location[1].La])
+      } else {
+        this.secondBound.push([location[0].Ma, location[0].La])
+        this.secondBound.push([location[0].Ma, location[1].La])
+        this.secondBound.push([location[1].Ma, location[1].La])
+        this.secondBound.push([location[1].Ma, location[0].La])
+      }
       this.secondBound.push({ count: 0 })
       this.bound.push(this.secondBound)
     },
+    // (위도, 경도) 좌표로 kakao rectangle bound 생성
+    makeRectangle (point) {
+      // const rectangle_point = []
+      let sw = ''
+      let ne = ''
+      if (point[1].R_LNG > point[0].R_LNG) {
+        const east = this.toEast(point)
+        this.makeBound(east)
+        sw = east[0]
+        ne = east[1]
+      } else {
+        const west = this.toWest(point)
+        this.makeBound(west)
+        sw = west[0]
+        ne = west[1]
+      }
+      const rectangleBounds = new kakao.maps.LatLngBounds(sw, ne)
+      const rectangle = new kakao.maps.Rectangle({
+        bounds: rectangleBounds,
+        strokeWeight: 4,
+        strokeColor: '#FF3DE5',
+        strokeOpacity: 0.6,
+        strokeStyle: 'solid',
+        fillColor: '#FF8AEF',
+        fillOpacity: 0
+      })
+      return rectangle
+    },
+    // rectangleArea DB에 저장
     async rectangleArea (square) {
-      console.log(square, 'square')
       const formData = {
         position: square
       }
-      console.log(formData, 'form')
       const response = await this.$axios.post('/api/position/bound', formData)
       console.log(response)
       if (response) {

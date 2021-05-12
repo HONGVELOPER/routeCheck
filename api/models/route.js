@@ -14,6 +14,11 @@ module.exports = function(sequelize, DataTypes) {
             type: DataTypes.DECIMAL(17, 14),
             allowNull: false,
         },
+        // R_START: {
+        //     type: DataTypes.INTEGER,
+        //     allowNull: false,
+        //     defaultValue: 0,
+        // },
         R_END: {
             type:DataTypes.INTEGER,
             allowNull: false,
