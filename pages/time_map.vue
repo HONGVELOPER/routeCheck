@@ -1,76 +1,104 @@
 <template>
-  <v-main>
-    <div>
-      <v-btn @click="rectangleArea(bound)">
-        click Me
-      </v-btn>
-      <v-card>
-        <div id="map" style="width:auto; height:920px;" />
-      </v-card>
+  <v-container>
+    <!-- <v-btn @click="rectangleArea(bound)">
+      click Me
+    </v-btn> -->
+    <v-overflow-btn
+      class="my-2"
+      :items="interval"
+      v-model="selected"
+      label="시간을 선택해주세요."
+    >
+    </v-overflow-btn>
+    <div v-if="selected !== null">
+      <div v-if="parseInt(selected) + 1 < 10">
+        {{ selected }} 시부터 0{{ parseInt(selected) + 1 }} 시 까지의 누적 지도입니다.
+      </div>
+      <div v-else>
+        {{ selected }} 시부터 {{ parseInt(selected) + 1 }} 시 까지의 누적 지도입니다.
+      </div>
     </div>
-  </v-main>
+    <v-card>
+      <div id="map" style="width:auto; height:550px;" />
+    </v-card>
+  </v-container>
 </template>
 
 <script>
 const pointInPolygon = require('point-in-polygon')
 export default {
-  async asyncData ({ $axios }) {
-    const response = await $axios.get('/api/position/route')
-    if (response.status === 200) {
-      return {
-        guide: response.data
+  // async asyncData ({ $axios }) {
+  //   const response = await $axios.get('/api/position/route')
+  //   if (response.status === 200) {
+  //     return {
+  //       guide: response.data
+  //     }
+  //   }
+  // },
+  data: () => ({
+    selected: null,
+    interval: ['00', '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', '13', '14', '15', '17', '18', '19', '20', '21', '22', '23'],
+    oneUser: [],
+    copyUser: [],
+    bound: [],
+    secondBound: [],
+    color: [
+      '#FFEC19',
+      '#FFE219',
+      '#FFCE19',
+      '#FFB819',
+      '#FF9C19',
+      '#FF8019',
+      '#FF6519',
+      '#FF4819',
+      '#FF3119',
+      '#FF1F19'
+    ],
+    point: [],
+    all_of_poly: [],
+    guide: null
+  }),
+  watch: {
+    selected (newValue) {
+      if (newValue !== null) {
+        this.all_of_poly = []
+        this.bound = []
+        this.oneUser = []
+        this.copyUser = []
+        this.getIntervalMap()
       }
     }
   },
-  data () {
-    return {
-      linePath: null,
-      oneUser: [],
-      copyUser: [],
-      dotCount: 0,
-      bound: [],
-      secondBound: [],
-      color: [
-        '#FFEC19',
-        '#FFE219',
-        '#FFCE19',
-        '#FFB819',
-        '#FF9C19',
-        '#FF8019',
-        '#FF6519',
-        '#FF4819',
-        '#FF3119',
-        '#FF1F19'
-      ],
-      colorCount: 0,
-      point: [],
-      all_of_poly: []
-    }
-  },
-  watch: {
+  mounted () {
 
   },
-  mounted () {
-    if (window.kakao && window.kakao.maps) {
-      this.initMap()
-    } else {
-      const script = document.createElement('script')
-      script.onload = () => kakao.maps.load(this.initMap)
-      script.src = 'http://dapi.kakao.com/v2/maps/sdk.js?autoload=false&appkey=d7e202cbf950de5b1b4c7b698b00a3c3'
-      document.head.appendChild(script)
-    }
-  },
   methods: {
+    showMap () {
+      console.log('showmap 진입')
+      if (window.kakao && window.kakao.maps) {
+        console.log('if문 진입')
+        this.initMap()
+      } else {
+        console.log('else문 진입')
+        const script = document.createElement('script')
+        script.onload = () => kakao.maps.load(this.initMap)
+        script.src = 'http://dapi.kakao.com/v2/maps/sdk.js?autoload=false&appkey=d7e202cbf950de5b1b4c7b698b00a3c3'
+        document.head.appendChild(script)
+        console.log('else finish')
+      }
+    },
     initMap () {
       // 지도 생성
+      console.log('initMap 진입')
       const container = document.getElementById('map')
       const options = {
         center: new kakao.maps.LatLng(37.473836720026874, 127.14338151549067),
         level: 5
       }
       const map = new kakao.maps.Map(container, options)
-
+      // console.log(this.guide, 'guideeeeeeeeeeee')
       // db 사람별로 배열 재정의, 아마 사람 이름이나 index로 재정의 해야 할듯 싶다.
+      // console.log(this.guide, 'guide')
       for (const i of this.guide) {
         if (i.R_END_TIME === '0') {
           this.oneUser.push(i)
@@ -80,8 +108,6 @@ export default {
           this.oneUser = []
         }
       }
-
-      // linePath 그리기 전 (위도, 경도)가 bound에 있는지 아닌지 파악
 
       // 바운드 마다 몇개의 (위도, 경도) 좌표가 있는지 counting 및 polyline 색 정하기
       for (const i of this.copyUser) {
@@ -125,35 +151,6 @@ export default {
         }
         i.setMap(map)
       }
-      // }
-      // 출발 마커
-      // const startSrc = 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/red_b.png'
-      // const startSize = new kakao.maps.Size(50, 45)
-      // const startOption = {
-      //   offset: new kakao.maps.Point(15, 45)
-      // }
-      // const startImage = new kakao.maps.MarkerImage(startSrc, startSize, startOption)
-      // const startPosition = new kakao.maps.LatLng(i[0].LAT, i[0].LNG)
-      // const startMarker = new kakao.maps.Marker({
-      //   position: startPosition,
-      //   image: startImage
-      // })
-      // startMarker.setMap(map)
-
-      // 도착 마커
-      // const arriveSrc = 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/blue_b.png'
-      // const arriveSize = new kakao.maps.Size(50, 45)
-      // const arriveOption = {
-      //   offset: new kakao.maps.Point(15, 45)
-      // }
-      // const arriveImage = new kakao.maps.MarkerImage(arriveSrc, arriveSize, arriveOption)
-      // console.log(i.length, '크기~~~~~~~`')
-      // const arrivePosition = new kakao.maps.LatLng(i[i.length - 1].LAT, i[i.length - 1].LNG)
-      // const arriveMarker = new kakao.maps.Marker({
-      //   position: arrivePosition,
-      //   image: arriveImage
-      // })
-      // arriveMarker.setMap(map)
     },
 
     // way = [[위도, 경도], [위도, 경도]] 데이터 이다.
@@ -239,15 +236,14 @@ export default {
       })
       return rectangle
     },
-    // rectangleArea DB에 저장
-    async rectangleArea (square) {
-      const formData = {
-        position: square
-      }
-      const response = await this.$axios.post('/api/position/bound', formData)
-      console.log(response)
-      if (response) {
-        console.log('db 적재 성공')
+    async getIntervalMap () {
+      console.log('here?')
+      const response = await this.$axios.get(`/api/position/interval?data=${this.selected}`)
+      this.guide = []
+      if (response.status === 200) {
+        this.guide = response.data
+        console.log(this.guide)
+        return this.showMap()
       }
     }
   }

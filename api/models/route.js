@@ -7,22 +7,20 @@ module.exports = function(sequelize, DataTypes) {
             autoIncrement: true,
         },
         R_LAT: {
-            type: DataTypes.DECIMAL(17, 15),
+            type: DataTypes.DECIMAL(10, 8),
             allowNull: false,
         },
         R_LNG: {
-            type: DataTypes.DECIMAL(17, 14),
+            type: DataTypes.DECIMAL(10, 7),
             allowNull: false,
         },
-        // R_START: {
-        //     type: DataTypes.INTEGER,
-        //     allowNull: false,
-        //     defaultValue: 0,
-        // },
-        R_END: {
-            type:DataTypes.INTEGER,
+        R_START_TIME: {
+            type: DataTypes.STRING,
             allowNull: false,
-            defaultValue: 0,
+        },
+        R_END_TIME: {
+            type: DataTypes.STRING,
+            allowNull: false,
         },
     }, {
         charset: 'utf8',

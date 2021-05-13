@@ -3,7 +3,7 @@ const { ROUTE, EXIST_AREA } = require('../models')
 const positionFunctions = {}
 
 positionFunctions.locationToDB = async function(position) {
-    console.log('function 진입')
+    console.log('locationToDB 진입')
     let success = false
     try {
         for (const i of position) {
@@ -16,6 +16,21 @@ positionFunctions.locationToDB = async function(position) {
                 console.log(success, 'success')
             }
         }
+    } catch (err) {
+        success = false
+        console.log(err)
+    }
+    return success
+}
+
+positionFunctions.getIntervalMap = async function() {
+    console.log('getIntervalMap 진입')
+    let success = false
+    try {
+        const result = await ROUTE.findAll({
+            raw: true,
+        })
+        success = result
     } catch (err) {
         success = false
         console.log(err)
