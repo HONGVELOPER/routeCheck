@@ -14,6 +14,14 @@ module.exports = function(sequelize, DataTypes) {
             type: DataTypes.DECIMAL(10, 7),
             allowNull: false,
         },
+        R_GENDER: {
+            type: DataTypes.STRING,
+            allowNull: false,
+        },
+        R_AGE: {
+            type: DataTypes.STRING,
+            allowNull: false,   
+        },
         R_START_TIME: {
             type: DataTypes.STRING,
             allowNull: false,
@@ -21,7 +29,7 @@ module.exports = function(sequelize, DataTypes) {
         R_END_TIME: {
             type: DataTypes.STRING,
             allowNull: false,
-        },
+        }
     }, {
         charset: 'utf8',
         collate: 'utf8_unicode_ci',

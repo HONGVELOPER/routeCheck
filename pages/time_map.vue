@@ -27,14 +27,6 @@
 <script>
 const pointInPolygon = require('point-in-polygon')
 export default {
-  // async asyncData ({ $axios }) {
-  //   const response = await $axios.get('/api/position/route')
-  //   if (response.status === 200) {
-  //     return {
-  //       guide: response.data
-  //     }
-  //   }
-  // },
   data: () => ({
     selected: null,
     interval: ['00', '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', '13', '14', '15', '17', '18', '19', '20', '21', '22', '23'],
@@ -127,7 +119,7 @@ export default {
               const polyline = new kakao.maps.Polyline({
                 endArrow: true,
                 path: linePath,
-                strokeWeight: 3,
+                strokeWeight: 1,
                 strokeOpacity: 0.8,
                 strokeStyle: 'solid'
               })

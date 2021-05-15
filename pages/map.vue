@@ -1,11 +1,8 @@
 <template>
   <v-main>
     <div>
-      <v-btn @click="rectangleArea(bound)">
-        click Me
-      </v-btn>
       <v-card>
-        <div id="map" style="width:auto; height:920px;" />
+        <div id="map" style="width:auto; height:650px;" />
       </v-card>
     </div>
   </v-main>
@@ -16,6 +13,7 @@ const pointInPolygon = require('point-in-polygon')
 export default {
   async asyncData ({ $axios }) {
     const response = await $axios.get('/api/position/route')
+    console.log(response.status, 'data in')
     if (response.status === 200) {
       return {
         guide: response.data
@@ -42,6 +40,18 @@ export default {
         '#FF3119',
         '#FF1F19'
       ],
+      // color: [
+      //   '#00F8FC',
+      //   '#00F2FC',
+      //   '#00ECFC',
+      //   '#00DEFD',
+      //   '#00CAFD',
+      //   '#00B3FD',
+      //   '#009BFE',
+      //   '#0086FD',
+      //   '#006DFE',
+      //   '#002CFF'
+      // ],
       colorCount: 0,
       point: [],
       all_of_poly: []
@@ -61,7 +71,7 @@ export default {
     }
   },
   methods: {
-    initMap () {
+    async initMap () {
       // 지도 생성
       const container = document.getElementById('map')
       const options = {
@@ -70,6 +80,7 @@ export default {
       }
       const map = new kakao.maps.Map(container, options)
 
+      console.log('map create finish')
       // db 사람별로 배열 재정의, 아마 사람 이름이나 index로 재정의 해야 할듯 싶다.
       for (const i of this.guide) {
         if (i.R_END_TIME === '0') {
@@ -81,27 +92,25 @@ export default {
         }
       }
 
-      // linePath 그리기 전 (위도, 경도)가 bound에 있는지 아닌지 파악
+      console.log('DB 재정렬 완료')
 
-      // 바운드 마다 몇개의 (위도, 경도) 좌표가 있는지 counting 및 polyline 색 정하기
       for (const i of this.copyUser) {
         for (const j of i) {
           const linePath = []
-          // const point = []
           this.point = []
           if (i.indexOf(j) < i.length - 1) {
             this.point.push(j)
             this.point.push(i[i.indexOf(j) + 1])
-            const kakaoRectangle = this.makeRectangle(this.point) // secondBound, kakaoBound 생성
+            const kakaoRectangle = await this.makeRectangle(this.point) // secondBound, kakaoBound 생성
             kakaoRectangle.setMap(map)
             linePath.push(new kakao.maps.LatLng(this.point[0].R_LAT, this.point[0].R_LNG))
             linePath.push(new kakao.maps.LatLng(this.point[1].R_LAT, this.point[1].R_LNG))
             for (const k of this.bound) {
-              // k 는 secondBound 배열이다.
               const polyline = new kakao.maps.Polyline({
                 endArrow: true,
                 path: linePath,
-                strokeWeight: 3,
+                strokeColor: '#FFEC19',
+                strokeWeight: 2,
                 strokeOpacity: 0.8,
                 strokeStyle: 'solid'
               })
@@ -115,47 +124,14 @@ export default {
           }
         }
       }
-      // bound count 숫자에 따른 polyline 생 지정
-      let index = 0
+      console.log('select polyline color')
+      await this.makeColor()
       for (const i of this.all_of_poly) {
-        if (this.bound[index]) {
-          const iterator = this.bound[index]
-          i.Eb[0].strokeColor = this.color[iterator[4].count]
-          index += 1
-        }
         i.setMap(map)
       }
-      // }
-      // 출발 마커
-      // const startSrc = 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/red_b.png'
-      // const startSize = new kakao.maps.Size(50, 45)
-      // const startOption = {
-      //   offset: new kakao.maps.Point(15, 45)
-      // }
-      // const startImage = new kakao.maps.MarkerImage(startSrc, startSize, startOption)
-      // const startPosition = new kakao.maps.LatLng(i[0].LAT, i[0].LNG)
-      // const startMarker = new kakao.maps.Marker({
-      //   position: startPosition,
-      //   image: startImage
-      // })
-      // startMarker.setMap(map)
-
-      // 도착 마커
-      // const arriveSrc = 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/blue_b.png'
-      // const arriveSize = new kakao.maps.Size(50, 45)
-      // const arriveOption = {
-      //   offset: new kakao.maps.Point(15, 45)
-      // }
-      // const arriveImage = new kakao.maps.MarkerImage(arriveSrc, arriveSize, arriveOption)
-      // console.log(i.length, '크기~~~~~~~`')
-      // const arrivePosition = new kakao.maps.LatLng(i[i.length - 1].LAT, i[i.length - 1].LNG)
-      // const arriveMarker = new kakao.maps.Marker({
-      //   position: arrivePosition,
-      //   image: arriveImage
-      // })
-      // arriveMarker.setMap(map)
+      console.log('over')
+      // bound count 숫자에 따른 polyline 생 지정
     },
-
     // way = [[위도, 경도], [위도, 경도]] 데이터 이다.
     // linePath가 오른쪽으로 움직일때
     toEast (way) {
@@ -213,7 +189,7 @@ export default {
     },
     // (위도, 경도) 좌표로 kakao rectangle bound 생성
     makeRectangle (point) {
-      // const rectangle_point = []
+      console.log('rectangle~')
       let sw = ''
       let ne = ''
       if (point[1].R_LNG > point[0].R_LNG) {
@@ -232,34 +208,28 @@ export default {
         bounds: rectangleBounds,
         strokeWeight: 4,
         strokeColor: '#FF3DE5',
-        strokeOpacity: 0.6,
+        strokeOpacity: 0,
         strokeStyle: 'solid',
         fillColor: '#FF8AEF',
         fillOpacity: 0
       })
       return rectangle
     },
-    // rectangleArea DB에 저장
-    async rectangleArea (square) {
-      const formData = {
-        position: square
-      }
-      const response = await this.$axios.post('/api/position/bound', formData)
-      console.log(response)
-      if (response) {
-        console.log('db 적재 성공')
+    makeColor () {
+      let index = 0
+      console.log(this.all_of_poly, 'all poly')
+      for (const i of this.all_of_poly) {
+        if (this.bound[index]) {
+          const iterator = this.bound[index]
+          const value = parseInt(iterator[4].count / 5)
+          console.log(value, 'value')
+          i.Eb[0].strokeColor = this.color[value]
+          index += 1
+        }
       }
     }
   }
 }
-// 10회 주기로 카운팅 해서 색 변경
-// 마우스 오버시 정확한 횟수 뜨도록
-// 1시간별 이동 기록 지도
-// 1시간별 이동 전체 카운트 ()
-// 연령별 (10살씩 분기) -> 나이에 따른 이용 카운트
-// 각각 진도 분기 시키기
-// 일별 전체 카운트
-// priority : 시간 > 연령 > 거리
 </script>
 
 <style>

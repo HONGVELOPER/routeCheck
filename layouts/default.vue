@@ -4,13 +4,13 @@
       전체 데이터 누적 지도
     </v-btn>
     <v-btn to="/time_map">
-      1시간 간격에 따른 지도 분리
+      1시간 간격에 따른 지도
     </v-btn>
-    <v-btn to="/age_map">
-      나이에 따른 지도 분리
+    <v-btn to="/marker_map">
+      출발 도착 포인트 누적 지도
     </v-btn>
-    <v-btn to="/usage_time_map">
-      이용시간에 따른 지도 분리
+    <v-btn to="/chart">
+      그래프
     </v-btn>
     <Nuxt />
   </v-app>
