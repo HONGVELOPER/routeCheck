@@ -10,6 +10,11 @@ positionFunctions.getIntervalMap = async function() {
     try {
         const result = await ROUTE.findAll({
             raw: true,
+            // where: {
+            //     R_ID: {
+            //         [Sequelize.Op.lt]: 2033
+            //     }
+            // },
         })
         data = result
     } catch (err) {

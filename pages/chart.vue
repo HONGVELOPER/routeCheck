@@ -116,8 +116,8 @@ export default {
         datasets: [
           {
             label: 'graph according to the Distance',
-            backgroundColor: '#f87979',
-            data: [1, 2, 3, 4, 5, 6, 7]
+            backgroundColor: '#f87979'
+            // data: [1, 2, 3, 4, 5, 6, 7]
           }
         ]
       },

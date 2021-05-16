@@ -29,29 +29,18 @@ export default {
       bound: [],
       secondBound: [],
       color: [
-        '#FFEC19',
-        '#FFE219',
-        '#FFCE19',
-        '#FFB819',
-        '#FF9C19',
-        '#FF8019',
-        '#FF6519',
-        '#FF4819',
-        '#FF3119',
-        '#FF1F19'
+        '#99DDFF',
+        '#99BBFF',
+        '#9999FF',
+        '#9977FF',
+        '#9955FF',
+        // '#777777',
+        '#9911FF',
+        '#CC00FF',
+        '#CC00BB',
+        '#CC0088',
+        '#CC0055'
       ],
-      // color: [
-      //   '#00F8FC',
-      //   '#00F2FC',
-      //   '#00ECFC',
-      //   '#00DEFD',
-      //   '#00CAFD',
-      //   '#00B3FD',
-      //   '#009BFE',
-      //   '#0086FD',
-      //   '#006DFE',
-      //   '#002CFF'
-      // ],
       colorCount: 0,
       point: [],
       all_of_poly: []
@@ -105,47 +94,55 @@ export default {
             kakaoRectangle.setMap(map)
             linePath.push(new kakao.maps.LatLng(this.point[0].R_LAT, this.point[0].R_LNG))
             linePath.push(new kakao.maps.LatLng(this.point[1].R_LAT, this.point[1].R_LNG))
+            const polyline = new kakao.maps.Polyline({
+              endArrow: true,
+              path: linePath,
+              // strokeColor: '#FFFFFF',
+              strokeWeight: 2,
+              strokeOpacity: 0.8,
+              strokeStyle: 'solid'
+            })
             for (const k of this.bound) {
-              const polyline = new kakao.maps.Polyline({
-                endArrow: true,
-                path: linePath,
-                strokeColor: '#FFEC19',
-                strokeWeight: 2,
-                strokeOpacity: 0.8,
-                strokeStyle: 'solid'
-              })
-              let squareBound = null
-              squareBound = [k[0], k[1], k[2], k[3]]
-              if ((pointInPolygon([this.point[0].R_LAT, this.point[0].R_LNG], squareBound)) && (pointInPolygon([this.point[1].R_LAT, this.point[1].R_LNG], squareBound))) {
+              const squareBound = [k[0], k[1], k[2], k[3]]
+              if ((pointInPolygon([this.point[0].R_LAT, this.point[0].R_LNG], squareBound)) || (pointInPolygon([this.point[1].R_LAT, this.point[1].R_LNG], squareBound))) {
                 k[4].count += 1
-                this.all_of_poly.push(polyline)
               }
             }
+            this.all_of_poly.push(polyline)
           }
         }
       }
       console.log('select polyline color')
-      await this.makeColor()
+
+      let index = 0
       for (const i of this.all_of_poly) {
-        i.setMap(map)
+        if (this.bound[index]) {
+          const iterator = this.bound[index]
+          if (this.color[parseInt(iterator[4].count / 2)]) {
+            i.Eb[0].strokeColor = this.color[parseInt(iterator[4].count / 1.5)]
+          } else {
+            i.Eb[0].strokeColor = this.color[9]
+          }
+          index += 1
+          i.setMap(map)
+        }
       }
-      console.log('over')
-      // bound count 숫자에 따른 polyline 생 지정
     },
     // way = [[위도, 경도], [위도, 경도]] 데이터 이다.
     // linePath가 오른쪽으로 움직일때
     toEast (way) {
+      // console.log('east')
       const array = []
       let sw = null
       let ne = null
       // 오른쪽 위로 움직일때
       if (parseFloat(way[1].R_LAT) >= parseFloat(way[0].R_LAT)) {
-        sw = new kakao.maps.LatLng(parseFloat(way[0].R_LAT) - 0.00003, parseFloat(way[0].R_LNG) - 0.00003)
-        ne = new kakao.maps.LatLng(parseFloat(way[1].R_LAT) + 0.00003, parseFloat(way[1].R_LNG) + 0.00003)
+        sw = new kakao.maps.LatLng(parseFloat(way[0].R_LAT) - 0.00003, parseFloat(way[0].R_LNG) - 0.0003)
+        ne = new kakao.maps.LatLng(parseFloat(way[1].R_LAT) + 0.00003, parseFloat(way[1].R_LNG) + 0.0003)
       } else {
         // 오른쪽 아래로 움직일때
-        sw = new kakao.maps.LatLng(parseFloat(way[0].R_LAT) + 0.00003, parseFloat(way[0].R_LNG) - 0.00003)
-        ne = new kakao.maps.LatLng(parseFloat(way[1].R_LAT) - 0.00003, parseFloat(way[1].R_LNG) + 0.00003)
+        sw = new kakao.maps.LatLng(parseFloat(way[0].R_LAT) + 0.00003, parseFloat(way[0].R_LNG) - 0.0003)
+        ne = new kakao.maps.LatLng(parseFloat(way[1].R_LAT) - 0.00003, parseFloat(way[1].R_LNG) + 0.0003)
       }
       array.push(sw)
       array.push(ne)
@@ -153,17 +150,18 @@ export default {
     },
     // linePath가 왼쪽으로 움직일때
     toWest (way) {
+      // console.log('west')
       const array = []
       let sw = null
       let ne = null
       // 왼쪽 위로 움직일때
       if (parseFloat(way[1].R_LAT) >= parseFloat(way[0].R_LAT)) {
-        sw = new kakao.maps.LatLng(parseFloat(way[0].R_LAT) - 0.00003, parseFloat(way[0].R_LNG) + 0.00003)
-        ne = new kakao.maps.LatLng(parseFloat(way[1].R_LAT) + 0.00003, parseFloat(way[1].R_LNG) - 0.00003)
+        sw = new kakao.maps.LatLng(parseFloat(way[0].R_LAT) - 0.00003, parseFloat(way[0].R_LNG) + 0.0003)
+        ne = new kakao.maps.LatLng(parseFloat(way[1].R_LAT) + 0.00003, parseFloat(way[1].R_LNG) - 0.0003)
       } else {
         // 왼쪽 아래로 움직일때
-        sw = new kakao.maps.LatLng(parseFloat(way[0].R_LAT) + 0.00003, parseFloat(way[0].R_LNG) + 0.00003)
-        ne = new kakao.maps.LatLng(parseFloat(way[1].R_LAT) - 0.00003, parseFloat(way[1].R_LNG) - 0.00003)
+        sw = new kakao.maps.LatLng(parseFloat(way[0].R_LAT) + 0.00003, parseFloat(way[0].R_LNG) + 0.0003)
+        ne = new kakao.maps.LatLng(parseFloat(way[1].R_LAT) - 0.00003, parseFloat(way[1].R_LNG) - 0.0003)
       }
       array.push(sw)
       array.push(ne)
@@ -175,21 +173,21 @@ export default {
       if ((location[1].Ma < location[0].Ma && location[1].La > location[0].La) ||
         (location[1].Ma >= location[0].Ma && location[1].La <= location[0].La)) {
         this.secondBound.push([location[0].Ma, location[0].La])
-        this.secondBound.push([location[1].Ma, location[0].La])
-        this.secondBound.push([location[1].Ma, location[1].La])
         this.secondBound.push([location[0].Ma, location[1].La])
+        this.secondBound.push([location[1].Ma, location[1].La])
+        this.secondBound.push([location[1].Ma, location[0].La])
       } else {
         this.secondBound.push([location[0].Ma, location[0].La])
-        this.secondBound.push([location[0].Ma, location[1].La])
-        this.secondBound.push([location[1].Ma, location[1].La])
         this.secondBound.push([location[1].Ma, location[0].La])
+        this.secondBound.push([location[1].Ma, location[1].La])
+        this.secondBound.push([location[0].Ma, location[1].La])
       }
       this.secondBound.push({ count: 0 })
       this.bound.push(this.secondBound)
     },
     // (위도, 경도) 좌표로 kakao rectangle bound 생성
     makeRectangle (point) {
-      console.log('rectangle~')
+      // console.log('rectangle~')
       let sw = ''
       let ne = ''
       if (point[1].R_LNG > point[0].R_LNG) {
@@ -206,7 +204,7 @@ export default {
       const rectangleBounds = new kakao.maps.LatLngBounds(sw, ne)
       const rectangle = new kakao.maps.Rectangle({
         bounds: rectangleBounds,
-        strokeWeight: 4,
+        strokeWeight: 2,
         strokeColor: '#FF3DE5',
         strokeOpacity: 0,
         strokeStyle: 'solid',
@@ -214,19 +212,6 @@ export default {
         fillOpacity: 0
       })
       return rectangle
-    },
-    makeColor () {
-      let index = 0
-      console.log(this.all_of_poly, 'all poly')
-      for (const i of this.all_of_poly) {
-        if (this.bound[index]) {
-          const iterator = this.bound[index]
-          const value = parseInt(iterator[4].count / 5)
-          console.log(value, 'value')
-          i.Eb[0].strokeColor = this.color[value]
-          index += 1
-        }
-      }
     }
   }
 }
